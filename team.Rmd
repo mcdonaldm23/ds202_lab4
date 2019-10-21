@@ -1,0 +1,125 @@
+---
+title: "Lab 4"
+author: "Maureen McDonald and Omima Hassan"
+date: "10/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+```
+
+## Backgroup
+
+An excerpt of the individual player data of the Cyclone football team is available from Canvas. Dowload the excel file and put the file next to your Rmd files. Data based on the defense, offense, and the biography of the players were imported.
+```{r}
+library(readxl)
+defense <- read_excel('cyclonesFootball2018.xlsx', sheet='Defensive')
+offense <- read_excel('cyclonesFootball2018.xlsx', sheet='Offensive')
+bio <- read_excel('cyclonesFootball2018.xlsx', sheet='Biography')
+```
+
+References:
+
+Iowa State University Athelete
+A Beginner’s Guide to American Football for the rules of American football.
+
+## Cleaning data
+
+The player names and opponent names are changed to factors.
+```{r}
+Name= defense$Name= as.factor(defense$Name)
+Opponent_Opponent= defense$Opponent_Opponent= as.factor(defense$Name)
+
+Name= offense$Name= as.factor(offense$Name)
+Opponent_Opponent= offense$Opponent_Opponent= as.factor(offense$Name)
+
+Name= bio$Name= as.factor(bio$Name)
+```
+
+All offensive and defensive statistics are changed to numerical. The `Weight` column in Biography is also numeric. (Hint: look at `?mutate_at` if you want to save writing some code).
+
+```{r}
+Tackles_Solo= defense$Tackles_Solo=as.numeric(defense$Tackles_Solo)
+
+Tackles_ASST= defense$Tackles_ASST=as.numeric(defense$Tackles_ASST)
+
+Tackles_TFL= defense$Tackles_TFL=as.numeric(defense$Tackles_TFL)
+
+Tackles_Sack= defense$Tackles_Sack=as.numeric(defense$Tackles_Sack)
+
+Turnover_FF= defense$Turnover_FF=as.numeric(defense$Turnover_FF)
+
+Turnover_FR= defense$Turnover_FR=as.numeric(defense$Turnover_FR)
+
+Turnover_INT= defense$Turnover_INT=as.numeric(defense$Turnover_INT)
+
+Pass_QBH= defense$Pass_QBH= as.numeric(defense$Pass_QBH)
+
+Pass_PB= defense$Pass_PB= as.numeric(defense$Pass_PB)
+
+Receiving_REC= offense$Receiving_REC= as.numeric(offense$Receiving_REC)
+
+Receiveing_YDS= offense$Receiving_YDS=as.numeric(offense$Receiving_YDS)
+
+Receiveing_TD= offense$Receiving_TD=as.numeric(offense$Receiving_TD)
+
+Rushing_ATT= offense$Rushing_ATT=as.numeric(offense$Rushing_ATT)
+
+Rushing_YDS= offense$Rushing_YDS=as.numeric(offense$Rushing_YDS)
+
+Rushing_TD= offense$Rushing_TD=as.numeric(offense$Rushing_TD)
+
+'Passing_CMP-ATT'= offense$'Passing_CMP-ATT'=as.numeric(offense$'Passing_CMP-ATT')
+
+Passing_YDS= offense$Passing_YDS=as.numeric(offense$Passing_YDS)
+
+Passing_TD= offense$Passing_TD=as.numeric(offense$Passing_TD)
+
+Passing_INT= offense$Passing_INT=as.numeric(offense$Passing_INT)
+
+Weight= bio$Weight= as.numeric(bio$Weight)
+```
+
+`Height` column was seperated into two columns. The newly created columns were changed to numerics.
+
+```{r}
+bio= bio %>% separate(Height, into= c("Feet", "Inches"))
+
+Feet= bio$Feet=as.numeric(bio$Feet)
+Inches= bio$Inches=as.numeric(bio$Inches)
+
+bio= bio %>% select('Name', 'Weight', 'Feet', 'Inches')
+str(bio)
+```
+
+Then one column was created that represents `Height`. Drop any irrelavant columns from this process.
+```{r}
+
+```
+
+By cleaning the three data frames in R, at the end of this step we have the following three clean data frames: `defClean`, `offClean`, and `bioClean`. Print the structures of these data frames.
+```{r}
+defClean= defense
+offClean= offense
+bioClean= bio
+
+str(defClean)
+str(offClean)
+str(bioClean)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
