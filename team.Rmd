@@ -7,15 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
+library(readxl)
+library(tidyverse)
 library(plyr)
 ```
 
-## Backgroup
-
-An excerpt of the individual player data of the Cyclone football team is available from Canvas. Dowload the excel file and put the file next to your Rmd files. Data based on the defense, offense, and the biography of the players were imported.
+## **Loading the Data: Cyclone Football**
 ```{r}
 library(readxl)
 defense <- read_excel('cyclonesFootball2018.xlsx', sheet='Defensive')
@@ -23,26 +20,21 @@ offense <- read_excel('cyclonesFootball2018.xlsx', sheet='Offensive')
 bio <- read_excel('cyclonesFootball2018.xlsx', sheet='Biography')
 ```
 
-References:
+## **Part One: Data Cleaning**
 
-Iowa State University Athelete
-A Beginner’s Guide to American Football for the rules of American football.
-
-## Cleaning data
-
-The player names and opponent names are changed to factors.
+#### Changing the player and opponent names to factors.
 ```{r}
-Name= defense$Name= as.factor(defense$Name)
-Opponent_Opponent= defense$Opponent_Opponent= as.factor(defense$Opponent_Opponent)
+DefName= defense$Name= as.factor(defense$Name)
+DeffOpponent_Opponent= defense$Opponent_Opponent= as.factor(defense$Opponent_Opponent)
 
-Name= offense$Name=offense$Name= as.factor(offense$Name)
-Opponent_Opponent=offense$Opponent_Opponent= as.factor(offense$Opponent_Opponent)
+OffName= offense$Name=offense$Name= as.factor(offense$Name)
+OffOpponent_Opponent=offense$Opponent_Opponent= as.factor(offense$Opponent_Opponent)
 
 Name= bio$Name= as.factor(bio$Name)
 ```
 
-All offensive and defensive statistics are changed to numerical. The `Weight` column in Biography is also numeric. (Hint: look at `?mutate_at` if you want to save writing some code).
 
+#### Changing all offensive and defensive statistics as well as weight to numeric values.
 ```{r}
 Tackles_Solo= defense$Tackles_Solo=as.numeric(defense$Tackles_Solo)
 
@@ -85,7 +77,8 @@ Passing_INT= offense$Passing_INT=as.numeric(offense$Passing_INT)
 Weight= bio$Weight= as.numeric(bio$Weight)
 ```
 
-`Height` column was seperated into two columns. The newly created columns were changed to numerics.
+#### Separating the height column into two columns that are each numeric.
+
 
 ```{r}
 bio= bio %>% separate(Height, into= c("Feet", "Inches"))
@@ -93,96 +86,76 @@ bio= bio %>% separate(Height, into= c("Feet", "Inches"))
 Feet= bio$Feet=as.numeric(bio$Feet)
 Inches= bio$Inches=as.numeric(bio$Inches)
 
-bio= bio %>% select('Name', 'Weight', 'Feet', 'Inches', 'Hometown')
-str(bio)
-```
+FeetAsInches = Feet * 12
+newInches = FeetAsInches + Inches
+newInches = as.numeric(newInches)
 
-Then one column was created that represents `Height`. Drop any irrelavant columns from this process.
-```{r}
-bio=bio%>% unite(Height, Feet, Inches, sep="'")
+bio = bio %>% mutate(Height_Inches = newInches)
+bio = bio %>% select('Name', 'Weight', 'Height_Inches', 'Hometown')
 head(bio)
 ```
+* Height is now in inches 
 
-By cleaning the three data frames in R, at the end of this step we have the following three clean data frames: `defClean`, `offClean`, and `bioClean`. Print the structures of these data frames.
+#### Cleaned data frames
 ```{r}
 defClean= defense
 offClean= offense
 bioClean= bio
-
-str(defClean)
-str(offClean)
-str(bioClean)
 ```
 
-## Part two: Tidying (A)
-For the following questions, work was done with the cleaned data frames `defClean`, `offClean`, and `bioClean`.
-
-Reformat the `defClean` data frame into a tidy format using `gather`. The type of statistic (Tackles_Solo, Tackles_ASST, etc) is added as a **new key column named `Statistic`.** 
+## **Part Two: Tidying (A)**
 ```{r}
-head(defClean)
-redefClean= defClean %>% gather(key= DefStat, value = Statistic, Tackles_Solo:Pass_PB)
+redefClean= defClean %>% gather(key= Defense_Stat, value = Statistic, Tackles_Solo:Pass_PB)
 head(redefClean)
+tempData = redefClean %>% filter(Defense_Stat == "Tackles_Solo",Opponent_Opponent == "West Virginia" | Opponent_Opponent == "Kansas State", Statistic != 0)
 ```
 
-A histogram for each defensive statistic was made. `facet_wrap` was used to draw all histograms in a single plot:
 
+#### Histogram representing each defensive statistic
 ```{r}
-ggplot(redefClean, aes(Statistic))+ geom_histogram(binwidth = 1) + facet_wrap(~DefStat)
-
+ggplot(redefClean, aes(Statistic))+ geom_histogram(binwidth = 1) + facet_wrap(~Defense_Stat) + labs(title = "Relationship between defensive skills", x= "Type of Defensive Statistic", y = "Amount of Defensive Statistic")
 ```
 
-The defensive skills that are rarest are Turnover_FR and Turnover_INT.
-
-Did ISU have better defense against West Virginia or Kansas State? Answer this question by creating a scatterplot with x-axis being the number of solo tackles (by each player) against West Virginia, and y-axis being that against Kansas State. A large number of solo tackles indicates good defense.
-
+#### ISU Defense relationship between West Virginia and Kansas State
 ```{r}
+tempData = tempData %>% spread(Opponent_Opponent, Statistic)
 
+ggplot(tempData, aes(tempData$`West Virginia`, tempData$`Kansas State`)) + geom_point() + labs (title = "ISU Defense against different Schools", x = "West Virginia", y = "Kansas State")
 ```
 
 
-## Part two: Tidying  (B)
 
-`Hometown` was seperated into two columns, city and state.
+## **Part Two: Tidying (B)**
+
+#### Separating Hometown into two columns, City and State
 ```{r}
 bioClean= bioClean%>% separate(Hometown, into = c("City", "State"), sep = ",")
 head(bioClean)
 ```
 
-To answer how many players are from each state:
+#### Determining how many players are from each state.
 ```{r}
 count(bioClean$State)
 ```
 
-## Part three: Joining data frames
-
-Where the offensive players are from was found by joining the offensive data and player biography data appropriately.
-
+## **Part Three: Joining Data Frames**
 ```{r}
 bo= inner_join(offClean, bioClean, by= c("Name"))
-head(bo)
 ```
 
-
-There isn't a clear representation to whether or not a relationship exist between weight of a player and receiving yards.
+#### Determining if a relationship exists between the weight of a player and their receiving yards.
 ```{r}
-ggplot(bo, aes(Receiving_YDS,Weight))+ geom_point()
+ggplot(bo, aes(Weight, Receiving_YDS))+ geom_point() + labs(title = "Weight vs. Receiving Yards", x = "Weight", y= "Amount of Receiving Yards")
 ```
 
-Is there a relationship between weight and solo tackles?
+* From the plot it's been determined that there isn't a clear representation to whether or not a relationship exists between weight of a player and receiving yards.
+
+
+#### Determining whether a relationship exists between the weight of a player and the amount of tackles they have.
 ```{r}
-bd= inner_join(defClean, bioClean, by= c("Name"))
+bd= full_join(defClean, bioClean, by= c("Name"))
 head(bd)
-ggplot(bd, aes(Weight, Tackles_Solo))+ geom_point()
+ggplot(bd, aes(Weight, Tackles_Solo))+ geom_point() + labs(title = "Weight vs. Tackles", x = "Weight", y= "Amount of Tackles")
 ```
 
-There is a negative relationship between weight and solo tackles. As your weight increases your solo tackles decreases.
-
-
-
-
-
-
-
-
-
-
+* From the plot it's been determined that there exists a negative relationship between weight and solo tackles. As your weight increases your solo tackles are decreased.
